@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Administrador — Sistema de Canchas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━ HEADER ━━━━━━━━━━━━━━━━━━━━ -->
+<header>
+  <button class="menu-btn" onclick="toggleSidebar()" title="Menú">☰</button>
+  <div class="logo-mark">⚽</div>
+  <div class="logo-text">
+    <strong>Sistema de Canchas</strong>
+    <span>Gestión Integral</span>
+  </div>
+  <div class="header-right">
+    <div class="status-pill">Sistema Activo</div>
+    <button class="theme-btn" onclick="toggleTheme()" title="Cambiar tema">☀️</button>
+    <div class="notif-btn" onclick="goTo('notificaciones')" title="Notificaciones">
+      🔔<div class="notif-dot"></div>
+    </div>
+    <div class="user-chip">
+      <div class="avatar" id="headerAvatar">DA</div>
+      <span id="headerNombre">Admin</span>
+    </div>
+    <button class="btn-logout" onclick="logout()">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      Cerrar Sesión
+    </button>
+  </div>
+</header>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━ LAYOUT ━━━━━━━━━━━━━━━━━━━━ -->
+<div class="layout">
+
+<!-- SIDEBAR -->
+<aside>
+  <div class="nav-section">Principal</div>
+  <div class="nav-item active" onclick="goTo('inicio')"><div class="nav-icon">🏠</div>Inicio</div>
+  <div class="nav-item" onclick="goTo('reservas')"><div class="nav-icon">📅</div>Reservas<span class="badge" id="badgeReservas">0</span></div>
+  <div class="nav-item" onclick="goTo('canchas')"><div class="nav-icon">🏟️</div>Canchas</div>
+
+  <div class="nav-section">Gestión</div>
+  <div class="nav-item" onclick="goTo('clientes')"><div class="nav-icon">👥</div>Clientes<span class="badge gold" id="badgeClientes">0</span></div>
+  <div class="nav-item" onclick="goTo('torneos')"><div class="nav-icon">🏆</div>Torneos<span class="badge red">3</span></div>
+  <div class="nav-item" onclick="goTo('mantenimiento')"><div class="nav-icon">🔧</div>Mantenimiento</div>
+  <div class="nav-item" onclick="goTo('inventario')"><div class="nav-icon">📦</div>Inventario</div>
+
+  <div class="nav-section">Finanzas</div>
+  <div class="nav-item" onclick="goTo('finanzas')"><div class="nav-icon">💵</div>Finanzas</div>
+  <div class="nav-item" onclick="goTo('pagos')"><div class="nav-icon">💳</div>Pagos</div>
+  <div class="nav-item" onclick="goTo('caja')"><div class="nav-icon">🏦</div>Caja del Día</div>
+
+  <div class="nav-section">Análisis</div>
+  <div class="nav-item" onclick="goTo('reportes')"><div class="nav-icon">📊</div>Reportes</div>
+  <div class="nav-item" onclick="goTo('notificaciones')"><div class="nav-icon">🔔</div>Notificaciones<span class="badge red" id="badgeNotificaciones" style="display:none"></span></div>
+
+  <div class="nav-section">Sistema</div>
+  <div class="nav-item" onclick="goTo('configuracion')"><div class="nav-icon">⚙️</div>Configuración</div>
+</aside>
+
+<!-- MAIN -->
+<main>
+
+<!-- ══════════════════════════════════════════════
+     INICIO
+══════════════════════════════════════════════ -->
+<div id="sec-inicio" class="section active">
+  <div class="hero">
+    <div class="hero-badge" id="heroBadge">Cargando...</div>
+    <div class="hero-icon">⚽</div>
+    <div class="hero-content">
+      <h1>Sistema de Reservas<br>de Canchas</h1>
+      <p>Bienvenido, <strong style="color:#fff" id="heroNombre">Admin</strong> — Gestión Integral para Canchas de Fútbol</p>
+      <div class="hero-stats">
+        <div class="hero-stat"><span class="val">5</span><span class="lbl">Canchas</span></div>
+        <div class="divider-v"></div>
+        <div class="hero-stat"><span class="val" id="heroReservas">—</span><span class="lbl">Reservas hoy</span></div>
+        <div class="divider-v"></div>
+        <div class="hero-stat"><span class="val" id="heroIngresos">—</span><span class="lbl">Este mes</span></div>
+        <div class="divider-v"></div>
+        <div class="hero-stat"><span class="val" id="heroOcupacion">—</span><span class="lbl">Ocupación</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-row cols-4">
+    <div class="stat-card c-green"><span class="sc-icon">📅</span><div class="sc-label">Reservas Hoy</div><div class="sc-val" style="color:var(--green-bright)" id="statReservas">—</div><div class="sc-sub" id="statReservasSub">cargando...</div></div>
+    <div class="stat-card c-gold"><span class="sc-icon">💰</span><div class="sc-label">Ingresos Hoy</div><div class="sc-val" style="color:var(--gold)" id="statIngresos">—</div><div class="sc-sub" id="statIngresosSub">cargando...</div></div>
+    <div class="stat-card c-blue"><span class="sc-icon">👥</span><div class="sc-label">Clientes Activos</div><div class="sc-val" style="color:var(--blue)" id="statClientes">—</div><div class="sc-sub">registrados en el sistema</div></div>
+    <div class="stat-card c-red"><span class="sc-icon">⚠️</span><div class="sc-label">Canchas en Mant.</div><div class="sc-val" style="color:var(--red)" id="statMant">—</div><div class="sc-sub" id="statMantSub">estado actual</div></div>
+  </div>
+
+  <div class="row">
+    <div class="col" style="flex:2">
+      <div class="card-box">
+        <div class="box-head"><div><h2>Reservas Recientes</h2><p>Últimas reservas registradas</p></div><button class="btn btn-secondary btn-sm" onclick="goTo('reservas')">Ver todas</button></div>
+        <div id="tablaReservasHome"><div class="loading"><div class="spinner"></div>Cargando...</div></div>
+      </div>
+    </div>
+    <div class="col" style="flex:1">
+      <div class="card-box">
+        <div class="box-head"><h2>Estado de Canchas</h2></div>
+        <div id="estadoCanchasHome"><div class="loading"><div class="spinner"></div>Cargando...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div style="margin-bottom:14px"><span style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:2px;color:var(--text-muted)">Módulos del Sistema</span></div>
+    <div class="mod-grid">
+      <div class="mod-card c-green"  onclick="goTo('reservas')">    <div class="mod-icon">📅</div><h3>Reservas</h3>    <p>Gestiona disponibilidad y reservas de canchas</p></div>
+      <div class="mod-card c-blue"   onclick="goTo('clientes')">    <div class="mod-icon">👥</div><h3>Clientes</h3>    <p>Administra clientes y programa de fidelización</p></div>
+      <div class="mod-card c-gold"   onclick="goTo('finanzas')">    <div class="mod-icon">💰</div><h3>Finanzas</h3>    <p>Estadísticas y reportes financieros</p></div>
+      <div class="mod-card c-purple" onclick="goTo('pagos')">       <div class="mod-icon">💳</div><h3>Pagos</h3>       <p>PSE, Nequi, Daviplata y efectivo</p></div>
+      <div class="mod-card c-gold"   onclick="goTo('torneos')">     <div class="mod-icon">🏆</div><h3>Torneos</h3>     <p>Brackets, posiciones y estadísticas</p></div>
+      <div class="mod-card c-red"    onclick="goTo('mantenimiento')"><div class="mod-icon">🔧</div><h3>Mantenimiento</h3><p>Checklists y mantenimiento preventivo</p></div>
+      <div class="mod-card c-cyan"   onclick="goTo('reportes')">    <div class="mod-icon">📊</div><h3>Reportes</h3>    <p>Horas pico, proyecciones e inteligencia</p></div>
+      <div class="mod-card c-orange" onclick="goTo('inventario')">  <div class="mod-icon">📦</div><h3>Inventario</h3>  <p>Balones, chalecos, conos y más</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     RESERVAS
+══════════════════════════════════════════════ -->
+<div id="sec-reservas" class="section">
+
+  <!-- Header -->
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div>
+      <div class="page-title">Reservas</div>
+      <div class="page-sub">Gestión en tiempo real · <span id="resTimestamp" style="color:var(--text-muted)">—</span></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--green-bright)">
+      <span class="live-dot"></span>Actualización automática cada 30 s
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="stats-row cols-4">
+    <div class="stat-card c-green"><span class="sc-icon">✅</span><div class="sc-label">Confirmadas Hoy</div><div class="sc-val" style="color:var(--green-bright)" id="resKpiConf">—</div></div>
+    <div class="stat-card c-gold"><span class="sc-icon">⏳</span><div class="sc-label">Pendientes</div><div class="sc-val" style="color:var(--gold)" id="resKpiPend">—</div></div>
+    <div class="stat-card c-red"><span class="sc-icon">❌</span><div class="sc-label">Canceladas</div><div class="sc-val" style="color:var(--red)" id="resKpiCanc">—</div></div>
+    <div class="stat-card c-purple"><span class="sc-icon">💰</span><div class="sc-label">Ingresos Hoy</div><div class="sc-val" style="color:var(--purple);font-size:18px" id="resKpiIngresos">—</div></div>
+  </div>
+
+  <div class="row" style="align-items:flex-start">
+
+    <!-- Lista + tabs -->
+    <div class="col" style="flex:1.5">
+      <div class="card-box">
+        <div class="box-head" style="flex-wrap:wrap;gap:10px">
+          <div style="display:flex;gap:6px" id="resTabBtns">
+            <button class="btn btn-sm res-tab active" onclick="setTabReservas('hoy',this)">Hoy</button>
+            <button class="btn btn-sm res-tab" onclick="setTabReservas('pendientes',this)">Pendientes</button>
+            <button class="btn btn-sm res-tab" onclick="setTabReservas('proximas',this)">Próximas</button>
+            <button class="btn btn-sm res-tab" onclick="setTabReservas('todas',this)">Todas</button>
+          </div>
+          <input class="input-field" placeholder="🔍 Buscar cliente / cancha…" id="buscarReserva" style="width:200px;padding:6px 12px;font-size:12px" oninput="filtrarReservas()">
+        </div>
+        <div id="listaReservas" style="padding:12px 0"><div class="loading"><div class="spinner"></div>Cargando…</div></div>
+      </div>
+    </div>
+
+    <!-- Formulario nueva reserva -->
+    <div class="col" style="flex:1">
+      <div class="card-box">
+        <div class="box-head"><h2>✏️ Nueva Reserva</h2></div>
+        <div class="box-body" style="display:flex;flex-direction:column;gap:14px">
+          <div><label>Cliente</label>
+            <select class="input-field" id="nrCliente" onchange="calcularTotal()">
+              <option value="">— Seleccionar cliente —</option>
+            </select>
+          </div>
+          <div><label>Cancha</label>
+            <select class="input-field" id="nrCancha" onchange="calcularTotal();verificarDisponibilidad()">
+              <option value="" data-precio="0">— Seleccionar cancha —</option>
+            </select>
+          </div>
+          <div class="form-grid">
+            <div><label>Fecha</label><input class="input-field" type="date" id="nrFecha" onchange="verificarDisponibilidad()"></div>
+            <div><label>Hora inicio</label>
+              <select class="input-field" id="nrHora" onchange="verificarDisponibilidad()">
+                <option>08:00</option><option>09:00</option><option>10:00</option>
+                <option>11:00</option><option>12:00</option><option>13:00</option>
+                <option>14:00</option><option>15:00</option><option>16:00</option>
+                <option>17:00</option><option>18:00</option><option>19:00</option>
+                <option>20:00</option><option>21:00</option><option>22:00</option>
+              </select>
+            </div>
+          </div>
+          <div><label>Duración</label>
+            <select class="input-field" id="nrDuracion" onchange="calcularTotal()">
+              <option value="1">1 hora</option><option value="2">2 horas</option><option value="3">3 horas</option>
+            </select>
+          </div>
+          <div><label>Tipo</label>
+            <select class="input-field" id="nrTipo">
+              <option value="partido_libre">Partido libre</option>
+              <option value="recurrente">Recurrente semanal</option>
+              <option value="torneo">Torneo</option>
+              <option value="entrenamiento">Entrenamiento</option>
+            </select>
+          </div>
+          <div><label>Método de pago</label>
+            <select class="input-field" id="nrMetodo">
+              <option value="efectivo">💵 Efectivo</option>
+              <option value="nequi">📱 Nequi</option>
+              <option value="daviplata">📱 Daviplata</option>
+              <option value="pse">🏦 PSE</option>
+              <option value="tarjeta">💳 Tarjeta</option>
+            </select>
+          </div>
+          <div id="disponibilidadMsg"></div>
+          <div class="price-box">
+            <div class="lbl">Total estimado</div>
+            <div class="price" id="totalEstimado">$0</div>
+          </div>
+          <button class="btn btn-primary" id="btnConfirmarReserva" style="width:100%;justify-content:center" onclick="confirmarReserva()">Confirmar Reserva</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     CANCHAS
+══════════════════════════════════════════════ -->
+<div id="sec-canchas" class="section">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between">
+    <div><div class="page-title">Canchas</div><div class="page-sub">Estado y gestión de canchas en tiempo real</div></div>
+    <button class="btn btn-primary" onclick="abrirModalCancha()">＋ Nueva Cancha</button>
+  </div>
+  <div class="court-grid" id="canchasGrid"><div class="loading"><div class="spinner"></div>Cargando...</div></div>
+  <div class="card-box">
+    <div class="box-head"><h2>Ocupación por Horario — Hoy</h2></div>
+    <div class="box-body">
+      <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:8px" id="timelineChart"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     CLIENTES
+══════════════════════════════════════════════ -->
+<div id="sec-clientes" class="section">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between">
+    <div><div class="page-title">Clientes</div><div class="page-sub">CRM — Historial, fidelización y equipos</div></div>
+  </div>
+
+  <div class="stats-row cols-4">
+    <div class="stat-card c-blue"><span class="sc-icon">👥</span><div class="sc-label">Total Clientes</div><div class="sc-val" style="color:var(--blue)" id="cliTotal">—</div></div>
+    <div class="stat-card c-gold"><span class="sc-icon">⭐</span><div class="sc-label">Pts Fidelización</div><div class="sc-val" style="color:var(--gold)" id="cliPts">—</div></div>
+    <div class="stat-card c-green"><span class="sc-icon">💎</span><div class="sc-label">Clientes VIP</div><div class="sc-val" style="color:var(--green-bright)" id="cliVip">—</div><div class="sc-sub">Oro + Diamante</div></div>
+    <div class="stat-card c-purple"><span class="sc-icon">⚽</span><div class="sc-label">Nivel Diamante</div><div class="sc-val" style="color:var(--purple)" id="cliDiamante">—</div></div>
+  </div>
+
+  <div class="row">
+    <div class="col" style="flex:1.5">
+      <div class="card-box">
+        <div class="box-head"><h2>🏅 Ranking de Clientes Frecuentes</h2></div>
+        <div id="rankingClientes"><div class="loading"><div class="spinner"></div>Cargando...</div></div>
+      </div>
+
+      <div class="card-box">
+        <div class="box-head"><h2>📋 Todos los Clientes</h2><input class="input-field" placeholder="🔍 Buscar cliente..." id="buscarCliente" style="width:200px;padding:6px 12px;font-size:12px" oninput="filtrarClientes()"></div>
+        <div id="tablaClientes"><div class="loading"><div class="spinner"></div>Cargando...</div></div>
+      </div>
+    </div>
+
+    <div class="col" style="flex:1">
+      <div class="card-box">
+        <div class="box-head"><h2>⭐ Programa de Puntos</h2></div>
+        <div class="box-body" style="display:flex;flex-direction:column;gap:14px">
+          <div style="background:linear-gradient(135deg,rgba(245,184,0,.1),rgba(245,184,0,.05));border:1px solid rgba(245,184,0,.2);border-radius:12px;padding:16px">
+            <div style="font-size:11px;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;font-weight:600">Por cada $10.000</div>
+            <div style="font-family:'Bebas Neue';font-size:36px;color:var(--gold);line-height:1">1 PUNTO</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Canjeable por reservas y descuentos</div>
+          </div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:4px">Niveles de fidelización</div>
+          <div class="progress-wrap"><div class="progress-label"><span>🥉 Bronce</span><span>0–200 pts</span></div><div class="progress-bar"><div class="progress-fill pf-green" style="width:100%"></div></div></div>
+          <div class="progress-wrap"><div class="progress-label"><span>🥈 Plata</span><span>201–500 pts</span></div><div class="progress-bar"><div class="progress-fill pf-blue" style="width:75%"></div></div></div>
+          <div class="progress-wrap"><div class="progress-label"><span>🥇 Oro</span><span>501–800 pts</span></div><div class="progress-bar"><div class="progress-fill pf-gold" style="width:50%"></div></div></div>
+          <div class="progress-wrap"><div class="progress-label"><span>💎 Diamante</span><span>800+ pts</span></div><div class="progress-bar"><div class="progress-fill pf-red" style="width:25%"></div></div></div>
+          <div style="font-size:13px;font-weight:700;margin-top:4px">Beneficios</div>
+          <div style="font-size:12px;color:var(--text-muted);line-height:1.9">
+            🥉 <b>Bronce:</b> Acceso básico<br>
+            🥈 <b>Plata:</b> 5% descuento en reservas<br>
+            🥇 <b>Oro:</b> 10% descuento + reserva prioritaria<br>
+            💎 <b>Diamante:</b> 15% descuento + 1 hora gratis/mes
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     TORNEOS
+══════════════════════════════════════════════ -->
+<div id="sec-torneos" class="section">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between">
+    <div><div class="page-title">Torneos</div><div class="page-sub">Brackets, posiciones y estadísticas en tiempo real</div></div>
+    <button class="btn btn-primary" onclick="abrirModalTorneo()">＋ Nuevo Torneo</button>
+  </div>
+  <div class="stats-row cols-3">
+    <div class="stat-card c-gold"><span class="sc-icon">🏆</span><div class="sc-label">Torneos Activos</div><div class="sc-val" style="color:var(--gold)" id="tornActivos">—</div></div>
+    <div class="stat-card c-green"><span class="sc-icon">⚽</span><div class="sc-label">Torneos Pendientes</div><div class="sc-val" style="color:var(--green-bright)" id="tornPendientes">—</div></div>
+    <div class="stat-card c-blue"><span class="sc-icon">✅</span><div class="sc-label">Torneos Finalizados</div><div class="sc-val" style="color:var(--blue)" id="tornFinalizados">—</div></div>
+  </div>
+  <div id="torneosListaReal"></div>
+  <div class="row">
+    <div class="col" style="flex:1.5">
+      <div class="card-box">
+        <div class="box-head"><h2>🎯 Cuadro de Llave</h2></div>
+        <div class="box-body" style="padding-top:36px">
+          <div class="bracket">
+            <div class="bracket-round" data-label="CUARTOS">
+              <div class="bracket-match"><div class="bracket-team winner">Los Lobos<span class="score">3</span></div><div class="bracket-team loser">Team Norte<span class="score">1</span></div></div>
+              <div class="bracket-match"><div class="bracket-team winner">Bancolombia<span class="score">2</span></div><div class="bracket-team loser">Guerreros<span class="score">0</span></div></div>
+              <div class="bracket-match"><div class="bracket-team winner">Tigres FC<span class="score">4</span></div><div class="bracket-team loser">Los Pumas<span class="score">2</span></div></div>
+              <div class="bracket-match"><div class="bracket-team winner">Real Barrial<span class="score">1</span></div><div class="bracket-team loser">Atlético Sur<span class="score">0</span></div></div>
+            </div>
+            <div class="bracket-round" data-label="SEMIFINALES">
+              <div style="display:flex;align-items:center;margin:8px 0"><div style="width:10px;height:2px;background:var(--border2)"></div><div class="bracket-match" style="flex:1"><div class="bracket-team winner">Los Lobos<span class="score">2</span></div><div class="bracket-team loser">Bancolombia<span class="score">1</span></div></div></div>
+              <div style="display:flex;align-items:center;margin:8px 0"><div style="width:10px;height:2px;background:var(--border2)"></div><div class="bracket-match" style="flex:1"><div class="bracket-team">Tigres FC<span class="score" style="color:var(--text-muted)">—</span></div><div class="bracket-team">Real Barrial<span class="score" style="color:var(--text-muted)">—</span></div></div></div>
+            </div>
+            <div class="bracket-round" data-label="FINAL">
+              <div style="display:flex;align-items:center;margin:auto 0"><div style="width:10px;height:2px;background:var(--border2)"></div><div class="bracket-match" style="flex:1"><div class="bracket-team" style="color:var(--gold)">Los Lobos<span class="score" style="color:var(--text-muted)">—</span></div><div class="bracket-team">Por definir<span class="score" style="color:var(--text-muted)">—</span></div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col" style="flex:1">
+      <div class="card-box">
+        <div class="box-head"><h2>📊 Tabla de Posiciones</h2></div>
+        <table>
+          <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>P</th><th>GF</th><th>Pts</th></tr></thead>
+          <tbody>
+            <tr><td style="color:var(--gold)"><b>1</b></td><td><b>Los Lobos</b></td><td>5</td><td>4</td><td>1</td><td>14</td><td style="color:var(--green-bright)"><b>12</b></td></tr>
+            <tr><td>2</td><td>Tigres FC</td><td>5</td><td>3</td><td>2</td><td>11</td><td style="color:var(--green-bright)"><b>9</b></td></tr>
+            <tr><td>3</td><td>Bancolombia</td><td>5</td><td>3</td><td>2</td><td>9</td><td style="color:var(--green-bright)"><b>9</b></td></tr>
+            <tr><td>4</td><td>Real Barrial</td><td>5</td><td>2</td><td>3</td><td>7</td><td>6</td></tr>
+            <tr><td>5</td><td>Guerreros</td><td>5</td><td>1</td><td>4</td><td>5</td><td style="color:var(--red)">3</td></tr>
+            <tr><td>6</td><td>Team Norte</td><td>5</td><td>0</td><td>5</td><td>2</td><td style="color:var(--red)">0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card-box">
+        <div class="box-head"><h2>⚡ Goleadores</h2></div>
+        <table>
+          <thead><tr><th>#</th><th>Jugador</th><th>Equipo</th><th>Goles</th><th>🟨</th></tr></thead>
+          <tbody>
+            <tr><td style="color:var(--gold)"><b>1</b></td><td><b>R. García</b></td><td>Los Lobos</td><td style="color:var(--green-bright)"><b>7</b></td><td>1</td></tr>
+            <tr><td>2</td><td>M. Torres</td><td>Tigres FC</td><td style="color:var(--green-bright)"><b>5</b></td><td>2</td></tr>
+            <tr><td>3</td><td>J. Pérez</td><td>Bancolombia</td><td style="color:var(--green-bright)"><b>4</b></td><td>0</td></tr>
+            <tr><td>4</td><td>L. Silva</td><td>Real Barrial</td><td style="color:var(--green-bright)"><b>4</b></td><td>3</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MANTENIMIENTO
+══════════════════════════════════════════════ -->
+<div id="sec-mantenimiento" class="section">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between">
+    <div><div class="page-title">Mantenimiento</div><div class="page-sub">Checklists preventivos y estado de instalaciones</div></div>
+    <button class="btn btn-primary" onclick="abrirModalTarea()">＋ Nueva Tarea</button>
+  </div>
+  <div class="stats-row cols-4">
+    <div class="stat-card c-green"><span class="sc-icon">✅</span><div class="sc-label">Tareas Completadas</div><div class="sc-val" style="color:var(--green-bright)" id="maintCompletadas">—</div></div>
+    <div class="stat-card c-gold"><span class="sc-icon">⏳</span><div class="sc-label">Pendientes</div><div class="sc-val" style="color:var(--gold)" id="maintPendientes">—</div></div>
+    <div class="stat-card c-red"><span class="sc-icon">🚨</span><div class="sc-label">Urgentes</div><div class="sc-val" style="color:var(--red)" id="maintUrgentes">—</div></div>
+    <div class="stat-card c-orange"><span class="sc-icon">🔧</span><div class="sc-label">Canchas en Mant.</div><div class="sc-val" style="color:var(--orange)" id="maintCanchasMant">—</div></div>
+  </div>
+  <div class="row">
+    <div class="col" style="flex:1.5">
+      <div class="card-box">
+        <div class="box-head"><h2>📋 Checklist Diario</h2><span style="font-size:12px;color:var(--text-muted)" id="maintFecha"></span></div>
+        <div id="checklistMant"></div>
+      </div>
+    </div>
+    <div class="col" style="flex:1">
+      <div class="card-box">
+        <div class="box-head"><h2>📊 Mantenimiento Preventivo</h2></div>
+        <div class="box-body" style="display:flex;flex-direction:column;gap:12px">
+          <div class="progress-wrap"><div class="progress-label"><span>Cancha 1 — Césped Natural</span><span style="color:var(--green-bright)">82%</span></div><div class="progress-bar"><div class="progress-fill pf-green" style="width:82%"></div></div></div>
+          <div class="progress-wrap"><div class="progress-label"><span>Cancha 2 — Grama Sintética</span><span style="color:var(--green-bright)">91%</span></div><div class="progress-bar"><div class="progress-fill pf-green" style="width:91%"></div></div></div>
+          <div class="progress-wrap"><div class="progress-label"><span>Cancha 3 — Grama Sintética</span><span style="color:var(--red)">Atención</span></div><div class="progress-bar"><div class="progress-fill pf-red" style="width:48%"></div></div></div>
+          <div class="progress-wrap"><div class="progress-label"><span>Cancha 4 — Grama Sintética</span><span style="color:var(--green-bright)">96%</span></div><div class="progress-bar"><div class="progress-fill pf-green" style="width:96%"></div></div></div>
+          <div class="progress-wrap"><div class="progress-label"><span>Cancha 5 — En mantenimiento</span><span style="color:var(--gold)">35%</span></div><div class="progress-bar"><div class="progress-fill pf-gold" style="width:35%"></div></div></div>
+          <div style="background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:10px;padding:14px;margin-top:6px">
+            <div style="font-size:12px;color:var(--red);font-weight:700;margin-bottom:6px">⚠️ Alertas</div>
+            <div style="font-size:12px;color:var(--text-muted);line-height:1.8">• Cancha 3: Rotura detectada en costura NE<br>• Cancha 1: Próx. fertilización en 5 días<br>• Iluminación C5: Bombillo fundido sector B</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-box">
+        <div class="box-head"><h2>👷 Personal Asignado</h2></div>
+        <div>
+          <div class="client-row"><div class="client-avatar" style="background:linear-gradient(135deg,#1a7a36,#22c55e)">MR</div><div class="client-info"><strong>Miguel Rodríguez</strong><span>Turno 06:00–14:00 · 3 tareas hoy</span></div><span class="pill confirmed">Activo</span></div>
+          <div class="client-row"><div class="client-avatar" style="background:linear-gradient(135deg,#1d4ed8,#3b82f6)">CP</div><div class="client-info"><strong>Carlos Pineda</strong><span>Turno 14:00–22:00 · 2 tareas</span></div><span class="pill pending">En turno</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     INVENTARIO
+══════════════════════════════════════════════ -->
+<div id="sec-inventario" class="section">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between">
+    <div><div class="page-title">Inventario</div><div class="page-sub">Control de implementos deportivos y equipamiento</div></div>
+    <button class="btn btn-primary" onclick="abrirModalInventario()">＋ Registrar Item</button>
+  </div>
+  <div class="stats-row cols-4">
+    <div class="stat-card c-green"><span class="sc-icon">📦</span><div class="sc-label">Items Totales</div><div class="sc-val" style="color:var(--green-bright)" id="invTotal">—</div></div>
+    <div class="stat-card c-red"><span class="sc-icon">⚠️</span><div class="sc-label">Stock Bajo</div><div class="sc-val" style="color:var(--red)" id="invBajo">—</div><div class="sc-sub">requieren reposición</div></div>
+    <div class="stat-card c-orange"><span class="sc-icon">🔄</span><div class="sc-label">Categorías</div><div class="sc-val" style="color:var(--orange)">4</div></div>
+    <div class="stat-card c-blue"><span class="sc-icon">✅</span><div class="sc-label">Stock OK</div><div class="sc-val" style="color:var(--blue)" id="invOk">—</div></div>
+  </div>
+  <div class="card-box">
+    <div class="box-head"><h2>📦 Inventario General</h2></div>
+    <div class="box-body">
+      <div class="inv-grid" id="invGrid"><div class="loading"><div class="spinner"></div>Cargando...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     FINANZAS
+══════════════════════════════════════════════ -->
+<div id="sec-finanzas" class="section">
+  <div><div class="page-title">Finanzas</div><div class="page-sub">Estadísticas financieras y proyecciones del negocio</div></div>
+  <div class="stats-row cols-4">
+    <div class="stat-card c-green"><span class="sc-icon">💰</span><div class="sc-label">Ingresos Este Mes</div><div class="sc-val" style="color:var(--green-bright)" id="finKpiIngresos">—</div><div class="sc-sub" id="finKpiIngresosSub">mes actual</div></div>
+    <div class="stat-card c-gold"><span class="sc-icon">📈</span><div class="sc-label">Ingreso Promedio/Día</div><div class="sc-val" style="color:var(--gold)" id="finKpiPromedio">—</div><div class="sc-sub">días transcurridos</div></div>
+    <div class="stat-card c-red"><span class="sc-icon">📉</span><div class="sc-label">Gastos Operativos</div><div class="sc-val" style="color:var(--red)" id="finKpiGastos">—</div><div class="sc-sub">egresos registrados</div></div>
+    <div class="stat-card c-blue"><span class="sc-icon">💹</span><div class="sc-label">Utilidad Neta</div><div class="sc-val" style="color:var(--blue)" id="finKpiUtilidad">—</div><div class="sc-sub" id="finKpiUtilidadSub">ingresos − gastos</div></div>
+  </div>
+  <div class="row">
+    <div class="col" style="flex:1.5">
+      <div class="card-box">
+        <div class="box-head"><h2>📊 Ingresos por Mes — 2026</h2></div>
+        <div class="box-body"><div class="bar-chart" id="barFinanzas"></div></div>
+      </div>
+      <div class="card-box">
+        <div class="box-head"><h2>🏟️ Ingresos por Cancha</h2><span style="font-size:11px;color:var(--text-muted)" id="finCanchasMes"></span></div>
+        <div class="box-body" style="display:flex;flex-direction:column;gap:10px" id="finCanchas">
+          <div style="padding:24px;text-align:center;color:var(--text-muted)">Cargando...</div>
+        </div>
+      </div>
+    </div>
+    <div class="col" style="flex:1">
+      <div class="card-box">
+        <div class="box-head"><h2>📈 Proyección del Mes</h2></div>
+        <div class="box-body" style="display:flex;flex-direction:column;gap:14px" id="finProyeccion">
+          <div style="padding:24px;text-align:center;color:var(--text-muted)">Cargando...</div>
+        </div>
+      </div>
+      <div class="card-box">
+        <div class="box-head"><h2>🧾 Facturación Electrónica</h2></div>
+        <div class="box-body" style="display:flex;flex-direction:column;gap:12px">
+          <div style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px">
+            <span style="font-size:28px">🇨🇴</span>
+            <div><div style="font-size:13px;font-weight:700">DIAN Colombia</div><div style="font-size:11px;color:var(--text-muted)">Integración activa · Resolución vigente</div></div>
+            <span class="pill confirmed" style="margin-left:auto">Conectado</span>
+          </div>
+          <div style="display:flex;gap:10px">
+            <div style="flex:1;background:var(--dark-input);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center"><div style="font-family:'Bebas Neue';font-size:28px;color:var(--green-bright)">182</div><div style="font-size:11px;color:var(--text-muted)">Facturas emitidas</div></div>
+            <div style="flex:1;background:var(--dark-input);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center"><div style="font-family:'Bebas Neue';font-size:28px;color:var(--gold)">8</div><div style="font-size:11px;color:var(--text-muted)">Pendientes</div></div>
+          </div>
+          <button class="btn btn-secondary" style="width:100%;justify-content:center" onclick="generarReporteDIAN()">📋 Generar Reporte DIAN</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PAGOS
+══════════════════════════════════════════════ -->
+<div id="sec-pagos" class="section">
+  <div><div class="page-title">Pagos</div><div class="page-sub">Control de ingresos, métodos de pago y facturación</div></div>
+  <div class="stats-row cols-4">
+    <div class="stat-card c-green"><span class="sc-icon">💵</span><div class="sc-label">Efectivo Hoy</div><div class="sc-val" style="color:var(--green-bright)" id="pEfectivo">—</div></div>
+    <div class="stat-card c-blue"><span class="sc-icon">📱</span><div class="sc-label">Nequi / Daviplata</div><div class="sc-val" style="color:var(--blue)" id="pNequi">—</div></div>
+    <div class="stat-card c-purple"><span class="sc-icon">🏦</span><div class="sc-label">PSE / Transferencia</div><div class="sc-val" style="color:var(--purple)" id="pPse">—</div></div>
+    <div class="stat-card c-gold"><span class="sc-icon">💳</span><div class="sc-label">Tarjetas</div><div class="sc-val" style="color:var(--gold)" id="pTarjeta">—</div></div>
+  </div>
+  <div class="row">
+    <div class="col" style="flex:1.5">
+      <div class="card-box">
+        <div class="box-head"><h2>💸 Últimas Transacciones</h2><button class="btn btn-secondary btn-sm" onclick="exportarCSV()">Exportar CSV</button></div>
+        <div id="tablaPagos"><div class="loading"><div class="spinner"></div>Cargando...</div></div>
+      </div>
+    </div>
+    <div class="col" style="flex:1">
+      <div class="card-box">
+        <div class="box-head"><h2>💳 Métodos Habilitados</h2></div>
+        <div class="box-body" style="display:flex;flex-direction:column;gap:10px">
+          <div class="payment-method"><div class="pm-icon" style="background:rgba(34,197,94,.12)">💵</div><div class="pm-info"><strong>Efectivo</strong><span>Pago en caja</span></div><div class="pm-amount" id="pmEfectivo">—</div></div>
+          <div class="payment-method"><div class="pm-icon" style="background:rgba(59,130,246,.12)">📱</div><div class="pm-info"><strong>Nequi</strong><span>Transferencia móvil</span></div><div class="pm-amount" id="pmNequi">—</div></div>
+          <div class="payment-method"><div class="pm-icon" style="background:rgba(251,146,60,.12)">📱</div><div class="pm-info"><strong>Daviplata</strong><span>Transferencia móvil</span></div><div class="pm-amount" id="pmDaviplata">—</div></div>
+          <div class="payment-method"><div class="pm-icon" style="background:rgba(167,139,250,.12)">🏦</div><div class="pm-info"><strong>PSE</strong><span>Débito bancario</span></div><div class="pm-amount" id="pmPse">—</div></div>
+          <div class="payment-method"><div class="pm-icon" style="background:rgba(245,184,0,.1)">💳</div><div class="pm-info"><strong>Tarjeta Cred/Déb</strong><span>Dataphone</span></div><div class="pm-amount" id="pmTarjeta">—</div></div>
+        </div>
+      </div>
+      <div class="card-box">
+        <div class="box-head"><h2>🎟️ Membresías</h2></div>
+        <div>
+          <div class="maint-item"><div style="width:38px;height:38px;border-radius:9px;background:rgba(245,184,0,.1);display:flex;align-items:center;justify-content:center;font-size:20px">🥇</div><div class="maint-info"><strong>Membresía Mensual Oro</strong><span>$180.000/mes · 4 reservas incluidas</span></div><span class="pill confirmed">18 activas</span></div>
+          <div class="maint-item"><div style="width:38px;height:38px;border-radius:9px;background:rgba(34,197,94,.1);display:flex;align-items:center;justify-content:center;font-size:20px">🥈</div><div class="maint-info"><strong>Membresía Mensual Plata</strong><span>$90.000/mes · 2 reservas incluidas</span></div><span class="pill confirmed">32 activas</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     CAJA DEL DÍA
+══════════════════════════════════════════════ -->
+<div id="sec-caja" class="section">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between">
+    <div><div class="page-title">Caja del Día</div><div class="page-sub" id="cajaSub">Turno activo</div></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-gold" onclick="arqueoParcial()">🥊 Arqueo Parcial</button>
+      <button class="btn btn-primary" onclick="cerrarCaja()">🔒 Cerrar Caja</button>
+    </div>
+  </div>
+  <div class="stats-row cols-4">
+    <div class="stat-card c-green"><span class="sc-icon">🟢</span><div class="sc-label">Base de Caja</div><div class="sc-val" style="color:var(--green-bright)">$200.000</div></div>
+    <div class="stat-card c-gold"><span class="sc-icon">💰</span><div class="sc-label">Ingresos del Día</div><div class="sc-val" style="color:var(--gold)" id="cajaIngresos">—</div></div>
+    <div class="stat-card c-red"><span class="sc-icon">💸</span><div class="sc-label">Egresos del Día</div><div class="sc-val" style="color:var(--red)">$120.000</div></div>
+    <div class="stat-card c-green"><span class="sc-icon">💹</span><div class="sc-label">Total en Caja</div><div class="sc-val" style="color:var(--green-bright)" id="cajaTotal">—</div></div>
+  </div>
+  <div class="row">
+    <div class="col" style="flex:1">
+      <div class="card-box">
+        <div class="box-head"><h2>📋 Movimientos del Día</h2></div>
+        <div id="movimientosCaja"><div class="loading"><div class="spinner"></div>Cargando...</div></div>
+      </div>
+    </div>
+    <div class="col" style="flex:0.7">
+      <div class="card-box">
+        <div class="box-head"><h2>➕ Registrar Movimiento</h2></div>
+        <div class="box-body" style="display:flex;flex-direction:column;gap:12px">
+          <div><label>Tipo</label>
+            <select class="input-field" id="cajaTipo">
+              <option value="ingreso">↑ Ingreso</option>
+              <option value="egreso">↓ Egreso</option>
+            </select>
+          </div>
+          <div><label>Concepto</label><input class="input-field" id="cajaConcepto" placeholder="Descripción del movimiento"></div>
+          <div><label>Monto (COP)</label><input class="input-field" id="cajaMonto" placeholder="$0" type="number" min="0"></div>
+          <div><label>Método</label>
+            <select class="input-field" id="cajaMetodo">
+              <option value="efectivo">Efectivo</option><option value="nequi">Nequi</option>
+              <option value="pse">PSE</option><option value="tarjeta">Tarjeta</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="registrarMovimiento()">Registrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     REPORTES
+══════════════════════════════════════════════ -->
+<div id="sec-reportes" class="section">
+
+  <!-- Cabecera -->
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div>
+      <div class="page-title">Reportes & Analítica</div>
+      <div class="page-sub" style="display:flex;align-items:center;gap:10px">
+        <span id="rptTimestamp" style="color:var(--text-muted)">Cargando...</span>
+        <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--green-bright);font-weight:600">
+          <span style="width:7px;height:7px;background:var(--green-bright);border-radius:50%;animation:pulse 2s infinite"></span>
+          Actualización automática cada 30 s
+        </span>
+      </div>
+    </div>
+    <button class="btn btn-secondary btn-sm" onclick="actualizarReportes()">🔄 Forzar actualización</button>
+  </div>
+
+  <!-- KPIs dinámicos -->
+  <div class="stats-row cols-4" id="rptKpis" style="margin-top:20px"></div>
+
+  <!-- Fila principal -->
+  <div class="row">
+    <div class="col" style="flex:1.6">
+
+      <!-- Estado canchas en vivo -->
+      <div class="card-box">
+        <div class="box-head">
+          <h2>🏟️ Estado de Canchas — Ahora</h2>
+          <span class="pill confirmed" style="font-size:10px;padding:2px 8px">● En vivo</span>
+        </div>
+        <div id="rptCanchas" style="padding:12px 16px"></div>
+      </div>
+
+      <!-- Gantt de ocupación -->
+      <div class="card-box">
+        <div class="box-head">
+          <h2>⏱️ Ocupación por Horario — Hoy</h2>
+          <span style="font-size:11px;color:var(--text-muted)">Cada bloque = 1 hora</span>
+        </div>
+        <div class="box-body" id="rptGantt"></div>
+      </div>
+
+    </div>
+    <div class="col" style="flex:1">
+
+      <!-- Resumen de reservas -->
+      <div class="card-box">
+        <div class="box-head"><h2>📊 Reservas de Hoy</h2></div>
+        <div class="box-body" id="rptResumen"></div>
+      </div>
+
+      <!-- Pagos del día -->
+      <div class="card-box">
+        <div class="box-head"><h2>💳 Pagos del Día</h2></div>
+        <div class="box-body" id="rptPagos"></div>
+      </div>
+
+      <!-- Exportar -->
+      <div class="card-box">
+        <div class="box-head"><h2>📤 Exportar</h2></div>
+        <div class="box-body" style="display:flex;flex-direction:column;gap:10px">
+          <button class="btn btn-secondary" style="width:100%;justify-content:center" onclick="generarReporteDIAN()">🇨🇴 Reporte DIAN PDF</button>
+          <button class="btn btn-secondary" style="width:100%;justify-content:center" onclick="showToast('Generando PDF financiero...','info')">📄 Informe Financiero PDF</button>
+          <button class="btn btn-gold" style="width:100%;justify-content:center" onclick="exportarCSV()">📊 Exportar CSV</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Ingresos por cancha — ancho completo -->
+  <div class="card-box">
+    <div class="box-head"><h2>💰 Ingresos por Cancha — Hoy</h2></div>
+    <div class="box-body" id="rptIngresosCanchas"></div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════
+     NOTIFICACIONES
+══════════════════════════════════════════════ -->
+<div id="sec-notificaciones" class="section">
+  <div><div class="page-title">Notificaciones</div><div class="page-sub">Alertas y recordatorios del sistema</div></div>
+  <div class="card-box">
+    <div class="box-head">
+      <div><h2>🔔 Notificaciones</h2><p id="notifSubtitle">Cargando...</p></div>
+      <button class="btn btn-secondary btn-sm" onclick="marcarTodasLeidas()">Marcar todas como leídas</button>
+    </div>
+    <div id="listaNotificaciones"><div class="loading"><div class="spinner"></div>Consultando sistema...</div></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     CONFIGURACIÓN
+══════════════════════════════════════════════ -->
+<div id="sec-configuracion" class="section">
+  <div><div class="page-title">Configuración</div><div class="page-sub">Parámetros generales del sistema</div></div>
+  <div class="row">
+    <div class="col">
+      <div class="card-box">
+        <div class="box-head"><h2>🏟️ Datos del Negocio</h2></div>
+        <div class="box-body">
+          <div class="form-grid" style="gap:14px">
+            <div><label>Nombre del establecimiento</label><input class="input-field" id="cfgNegNombre" value="Canchas El Campeón"></div>
+            <div><label>NIT</label><input class="input-field" id="cfgNegNit" value="900.123.456-7"></div>
+            <div><label>Ciudad</label><input class="input-field" id="cfgNegCiudad" value="Bogotá, D.C."></div>
+            <div><label>Teléfono</label><input class="input-field" id="cfgNegTelefono" value="601 234 5678"></div>
+            <div class="form-full"><label>Dirección</label><input class="input-field" id="cfgNegDireccion" value="Cra 7 # 45-23, Localidad de Usaquén"></div>
+            <div class="form-full"><label>Horario de operación</label>
+              <input class="input-field" id="cfgNegHorario" value="06:00 – 23:00 (todos los días)">
+            </div>
+          </div>
+          <button class="btn btn-primary" style="margin-top:16px" onclick="guardarConfigNegocio()">Guardar Cambios</button>
+        </div>
+      </div>
+      <div class="card-box">
+        <div class="box-head"><h2>💰 Tarifas por Tipo de Cancha</h2></div>
+        <table>
+          <thead><tr><th>Tipo</th><th>Hora pico (18–22h)</th><th>Hora normal</th><th>Fin de semana</th></tr></thead>
+          <tbody>
+            <tr><td><b>Fútbol 11</b></td><td style="color:var(--gold)">$160.000</td><td style="color:var(--gold)">$110.000</td><td style="color:var(--gold)">$180.000</td></tr>
+            <tr><td><b>Fútbol 7</b></td><td style="color:var(--gold)">$110.000</td><td style="color:var(--gold)">$80.000</td><td style="color:var(--gold)">$120.000</td></tr>
+            <tr><td><b>Fútbol 5</b></td><td style="color:var(--gold)">$90.000</td><td style="color:var(--gold)">$65.000</td><td style="color:var(--gold)">$100.000</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="col" style="max-width:340px">
+      <div class="card-box">
+        <div class="box-head"><h2>🔔 Notificaciones</h2></div>
+        <div class="box-body" style="display:flex;flex-direction:column;gap:14px">
+          <div class="toggle-row"><span>WhatsApp recordatorios</span><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+          <div class="toggle-row"><span>Alertas de mantenimiento</span><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+          <div class="toggle-row"><span>Reporte diario automático</span><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+          <div class="toggle-row"><span>Email resumen semanal</span><div class="toggle" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+        </div>
+      </div>
+      <div class="card-box">
+        <div class="box-head"><h2>👤 Mi Cuenta</h2></div>
+        <div class="box-body" style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div class="avatar lg" id="cfgAvatar">DA</div>
+            <div><div style="font-weight:700" id="cfgNombre">Daniel Aldana</div><div style="font-size:12px;color:var(--text-muted)">Administrador · Super usuario</div></div>
+          </div>
+          <div><label>Correo electrónico</label><input class="input-field" id="cfgEmail" value="admin@canchas.co" readonly style="opacity:.6;cursor:not-allowed"></div>
+          <div><label>Nombre</label><input class="input-field" id="cfgNombreInput" placeholder="Tu nombre"></div>
+          <div><label>Nueva contraseña</label><input class="input-field" type="password" id="cfgPassword" placeholder="Dejar en blanco para no cambiar"></div>
+          <button class="btn btn-secondary" style="width:100%;justify-content:center" onclick="guardarPerfilAdmin()">Actualizar Perfil</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━ TOAST ━━━━━━━━━━━━━━━━━━━━ -->
+<div id="toast"><span class="toast-icon"></span><span class="toast-msg"></span></div>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━ MODAL COMPARTIDO ━━━━━━━━━━━━━━━━━━━━ -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)cerrarModal()">
+  <div class="modal" style="max-width:500px" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h3 id="modalTitulo">—</h3>
+      <button class="modal-close" onclick="cerrarModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-primary" id="modalBtnGuardar" onclick="_doGuardar()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<script src="../js/auth.js"></script>
+<script>applyTheme();</script>
+<script src="../js/admin.js"></script>
+</body>
+</html>

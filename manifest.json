@@ -1,0 +1,44 @@
+{
+  "name": "Canchas El Campeón",
+  "short_name": "Canchas",
+  "description": "Reserva canchas de fútbol de manera rápida y sencilla desde tu celular",
+  "start_url": "/cliente/portal.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f1117",
+  "theme_color": "#22c55e",
+  "lang": "es-CO",
+  "categories": ["sports", "lifestyle"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Hacer Reserva",
+      "short_name": "Reservar",
+      "description": "Reserva una cancha ahora",
+      "url": "/cliente/portal.html#reservar",
+      "icons": [{ "src": "/icons/icon-192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mis Reservas",
+      "short_name": "Reservas",
+      "description": "Ver mis reservas",
+      "url": "/cliente/portal.html#misreservas",
+      "icons": [{ "src": "/icons/icon-192.svg", "sizes": "192x192" }]
+    }
+  ]
+}

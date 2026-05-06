@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Canchas — Acceso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<style>
+  .auth-tabs { display:flex; gap:4px; margin-bottom:24px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12); border-radius:10px; padding:4px; }
+  .auth-tab  { flex:1; padding:8px; border:none; border-radius:8px; background:transparent; color:rgba(255,255,255,.75); font-family:'Outfit',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:all .2s; letter-spacing:.3px; }
+  .auth-tab:hover { color:#fff; background:rgba(255,255,255,.07); }
+  .auth-tab.active { background:var(--green-bright); color:#000; font-weight:700; }
+  .auth-panel { display:none; }
+  .auth-panel.active { display:block; }
+  .token-box { background:rgba(245,184,0,.1); border:1px solid var(--gold); border-radius:10px; padding:14px; text-align:center; margin:12px 0; }
+  .token-box .token-num { font-family:'Bebas Neue'; font-size:40px; letter-spacing:8px; color:var(--gold); }
+  .token-box small { color:var(--text-muted); font-size:12px; display:block; margin-top:4px; }
+  .back-link { text-align:center; margin-top:16px; }
+  .back-link a { color:var(--text-muted); font-size:13px; cursor:pointer; text-decoration:none; }
+  .back-link a:hover { color:var(--green); }
+  .step-dots { display:flex; justify-content:center; gap:8px; margin-bottom:20px; }
+  .step-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.15); transition:all .3s; }
+  .step-dot.active { background:var(--green); width:24px; border-radius:4px; }
+
+  /* ── Validación de contraseña ── */
+  .pass-rules { display:flex; flex-direction:column; gap:5px; margin-top:8px; }
+  .rule { display:flex; align-items:center; gap:7px; font-size:12px; color:var(--text-muted); transition:color .2s; }
+  .rule::before { content:'○'; font-size:11px; flex-shrink:0; transition:all .2s; }
+  .rule.ok { color:var(--green-bright); }
+  .rule.ok::before { content:'●'; color:var(--green-bright); }
+  .rule.fail { color:var(--red); }
+  .rule.fail::before { content:'●'; color:var(--red); }
+
+  .strength-bar { height:4px; border-radius:4px; background:rgba(255,255,255,.08); margin-top:10px; overflow:hidden; }
+  .strength-fill { height:100%; border-radius:4px; width:0; transition:width .3s, background .3s; }
+
+  .strength-label { font-size:11px; font-weight:600; margin-top:5px; transition:color .2s; }
+
+  .match-msg { font-size:12px; margin-top:6px; min-height:16px; transition:color .2s; }
+  .match-msg.ok   { color:var(--green-bright); }
+  .match-msg.fail { color:var(--red); }
+
+  .pass-toggle { position:relative; }
+  .pass-toggle .eye-btn {
+    position:absolute; right:11px; top:50%; transform:translateY(-50%);
+    background:none; border:none; color:var(--text-muted); cursor:pointer;
+    font-size:15px; padding:2px; line-height:1;
+  }
+  .pass-toggle .eye-btn:hover { color:var(--text-main); }
+  .pass-toggle .input-field { padding-right:36px; }
+
+  /* ── Modo claro ── */
+  html[data-theme="light"] .auth-tabs {
+    background:rgba(0,0,0,.05);
+    border-color:rgba(0,0,0,.1);
+  }
+  html[data-theme="light"] .auth-tab {
+    color:rgba(0,0,0,.55);
+  }
+  html[data-theme="light"] .auth-tab:hover {
+    color:rgba(0,0,0,.85);
+    background:rgba(0,0,0,.05);
+  }
+  html[data-theme="light"] .auth-tab.active {
+    background:var(--green-bright);
+    color:#fff;
+  }
+  html[data-theme="light"] .step-dot {
+    background:rgba(0,0,0,.15);
+  }
+  html[data-theme="light"] .strength-bar {
+    background:rgba(0,0,0,.08);
+  }
+  html[data-theme="light"] .back-link a {
+    color:var(--text-muted);
+  }
+  html[data-theme="light"] .back-link a:hover {
+    color:var(--green-mid);
+  }
+</style>
+</head>
+<body>
+
+<div class="login-page">
+  <div class="login-card" style="position:relative">
+    <button class="theme-btn-login" onclick="toggleTheme()">☀️</button>
+
+    <div class="login-logo">
+      <div class="icon">⚽</div>
+      <h1>Sistema de Canchas</h1>
+      <p>Gestión Integral · Canchas de Fútbol</p>
+    </div>
+
+    <!-- ── Tabs ── -->
+    <div class="auth-tabs" id="authTabs">
+      <button class="auth-tab active" onclick="showPanel('login')">Ingresar</button>
+      <button class="auth-tab"        onclick="showPanel('registro')">Registrarse</button>
+      <button class="auth-tab"        onclick="showPanel('recuperar')">Recuperar</button>
+    </div>
+
+    <!-- ══════════════════════════════════
+         PANEL: LOGIN
+    ══════════════════════════════════ -->
+    <div class="auth-panel active" id="panel-login">
+      <form class="login-form" id="loginForm" onsubmit="handleLogin(event)">
+        <div>
+          <label for="loginEmail">Correo electrónico</label>
+          <input class="input-field" type="email" id="loginEmail" placeholder="usuario@correo.co" required autocomplete="email">
+        </div>
+        <div>
+          <label for="loginPass">Contraseña</label>
+          <input class="input-field" type="password" id="loginPass" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+
+        <div class="login-error" id="loginError"></div>
+
+        <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;padding:12px;font-size:15px;" id="loginBtn">
+          Ingresar al Sistema
+        </button>
+      </form>
+
+      <!-- Demo credentials removed — check README or ask your administrator -->
+    </div>
+
+    <!-- ══════════════════════════════════
+         PANEL: REGISTRO
+    ══════════════════════════════════ -->
+    <div class="auth-panel" id="panel-registro">
+      <form class="login-form" id="registroForm" onsubmit="handleRegistro(event)" novalidate>
+        <div>
+          <label for="regNombre">Nombre completo</label>
+          <input class="input-field" type="text" id="regNombre" placeholder="Tu nombre" required autocomplete="name">
+        </div>
+        <div>
+          <label for="regEmail">Correo electrónico</label>
+          <input class="input-field" type="email" id="regEmail" placeholder="tu@correo.co" required autocomplete="email">
+        </div>
+        <div>
+          <label for="regTel">Teléfono (opcional)</label>
+          <input class="input-field" type="tel" id="regTel" placeholder="3001234567" autocomplete="tel">
+        </div>
+        <div>
+          <label for="regPass">Contraseña</label>
+          <div class="pass-toggle">
+            <input class="input-field" type="password" id="regPass" placeholder="Mínimo 8 caracteres" required autocomplete="new-password" oninput="validarPass()">
+            <button type="button" class="eye-btn" id="eyeReg1" onclick="togglePass('regPass','eyeReg1')" title="Mostrar contraseña">👁</button>
+          </div>
+          <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+          <div class="strength-label" id="strengthLabel"></div>
+          <div class="pass-rules" id="passRules">
+            <div class="rule" id="rule-len">Mínimo 8 caracteres</div>
+            <div class="rule" id="rule-upper">Al menos una mayúscula (A–Z)</div>
+            <div class="rule" id="rule-lower">Al menos una minúscula (a–z)</div>
+            <div class="rule" id="rule-num">Al menos un número (0–9)</div>
+            <div class="rule" id="rule-special">Carácter especial (!@#$…) — recomendado</div>
+          </div>
+        </div>
+        <div>
+          <label for="regPass2">Confirmar contraseña</label>
+          <div class="pass-toggle">
+            <input class="input-field" type="password" id="regPass2" placeholder="Repite la contraseña" required autocomplete="new-password" oninput="validarMatch()">
+            <button type="button" class="eye-btn" id="eyeReg2" onclick="togglePass('regPass2','eyeReg2')" title="Mostrar contraseña">👁</button>
+          </div>
+          <div class="match-msg" id="matchMsg"></div>
+        </div>
+
+        <div class="login-error" id="regError"></div>
+
+        <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;padding:12px;font-size:15px;" id="regBtn">
+          Crear Cuenta
+        </button>
+      </form>
+      <div class="back-link"><a onclick="showPanel('login')">← Volver al inicio de sesión</a></div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         PANEL: RECUPERAR (paso 1 — email)
+    ══════════════════════════════════ -->
+    <div class="auth-panel" id="panel-recuperar">
+      <div class="step-dots">
+        <div class="step-dot active" id="dot1"></div>
+        <div class="step-dot"        id="dot2"></div>
+      </div>
+
+      <!-- Paso 1: ingresar email -->
+      <div id="recStep1">
+        <form class="login-form" id="recForm1" onsubmit="handleRecuperar(event)">
+          <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px;line-height:1.5">
+            Ingresa tu correo y recibirás un código de 6 dígitos para restablecer tu contraseña.
+          </p>
+          <div>
+            <label for="recEmail">Correo electrónico</label>
+            <input class="input-field" type="email" id="recEmail" placeholder="tu@correo.co" required autocomplete="email">
+          </div>
+          <div class="login-error" id="recError1"></div>
+          <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;padding:12px;font-size:15px;" id="recBtn1">
+            Enviar Código
+          </button>
+        </form>
+      </div>
+
+      <!-- Paso 2: ingresar código + nueva contraseña -->
+      <div id="recStep2" style="display:none">
+        <div class="token-box" id="tokenDemo" style="display:none">
+          <small>Código generado (modo demo)</small>
+          <div class="token-num" id="tokenDemoNum">——</div>
+          <small>Válido por 15 minutos</small>
+        </div>
+        <form class="login-form" id="recForm2" onsubmit="handleReset(event)">
+          <div>
+            <label for="recToken">Código de verificación</label>
+            <input class="input-field" type="text" id="recToken" placeholder="123456" maxlength="6" pattern="\d{6}" required autocomplete="one-time-code">
+          </div>
+          <div>
+            <label for="recNewPass">Nueva contraseña</label>
+            <div class="pass-toggle">
+              <input class="input-field" type="password" id="recNewPass" placeholder="Mínimo 8 caracteres" required autocomplete="new-password" oninput="validarMatchReset()">
+              <button type="button" class="eye-btn" id="eyeRec1" onclick="togglePass('recNewPass','eyeRec1')" title="Mostrar contraseña">👁</button>
+            </div>
+          </div>
+          <div>
+            <label for="recNewPass2">Confirmar contraseña</label>
+            <div class="pass-toggle">
+              <input class="input-field" type="password" id="recNewPass2" placeholder="Repite la contraseña" required autocomplete="new-password" oninput="validarMatchReset()">
+              <button type="button" class="eye-btn" id="eyeRec2" onclick="togglePass('recNewPass2','eyeRec2')" title="Mostrar contraseña">👁</button>
+            </div>
+            <div class="match-msg" id="matchMsgReset"></div>
+          </div>
+          <div class="login-error" id="recError2"></div>
+          <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;padding:12px;font-size:15px;" id="recBtn2">
+            Cambiar Contraseña
+          </button>
+        </form>
+        <div class="back-link"><a onclick="volverPaso1()">← Usar otro correo</a></div>
+      </div>
+
+      <div class="back-link"><a onclick="showPanel('login')">← Volver al inicio de sesión</a></div>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/auth.js"></script>
+<script>
+  applyTheme();
+  // Redirigir si ya hay sesión activa
+  (function(){
+    const rol = localStorage.getItem('rol');
+    if (rol === 'admin')   window.location.href = 'admin/dashboard.html';
+    if (rol === 'cliente') window.location.href = 'cliente/portal.html';
+  })();
+
+  // Email temporal para el paso 2 de recuperación
+  let _recEmail = '';
+
+  // ── Navegación entre paneles ──
+  function showPanel(name) {
+    document.querySelectorAll('.auth-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    const tabs = document.querySelectorAll('.auth-tab');
+    const map  = { login:0, registro:1, recuperar:2 };
+    if (map[name] !== undefined) tabs[map[name]].classList.add('active');
+  }
+
+  function volverPaso1() {
+    document.getElementById('recStep1').style.display = '';
+    document.getElementById('recStep2').style.display = 'none';
+    document.getElementById('dot1').classList.add('active');
+    document.getElementById('dot2').classList.remove('active');
+    _recEmail = '';
+  }
+
+  // ── LOGIN ──
+  async function handleLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass  = document.getElementById('loginPass').value;
+    const btn   = document.getElementById('loginBtn');
+    const err   = document.getElementById('loginError');
+
+    btn.textContent = 'Verificando...';
+    btn.disabled    = true;
+    err.classList.remove('show');
+
+    try {
+      const result = await login(email, pass);
+      if (result.success) {
+        btn.textContent   = '✓ Acceso concedido';
+        btn.style.background = 'var(--green-neon)';
+        setTimeout(() => {
+          if (result.user.rol === 'admin') window.location.href = 'admin/dashboard.html';
+          else                              window.location.href = 'cliente/portal.html';
+        }, 400);
+      }
+    } catch (ex) {
+      err.textContent = ex.message || 'Credenciales incorrectas.';
+      err.classList.add('show');
+      btn.textContent  = 'Ingresar al Sistema';
+      btn.disabled     = false;
+      btn.style.background = '';
+    }
+  }
+
+  // ── REGISTRO ──
+  async function handleRegistro(e) {
+    e.preventDefault();
+    const nombre = document.getElementById('regNombre').value.trim();
+    const email  = document.getElementById('regEmail').value.trim();
+    const tel    = document.getElementById('regTel').value.trim();
+    const pass   = document.getElementById('regPass').value;
+    const pass2  = document.getElementById('regPass2').value;
+    const btn    = document.getElementById('regBtn');
+    const err    = document.getElementById('regError');
+
+    err.classList.remove('show');
+
+    if (!nombre) {
+      err.textContent = 'El nombre es requerido.';
+      err.classList.add('show');
+      document.getElementById('regNombre').focus(); return;
+    }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      err.textContent = 'Ingresa un correo electrónico válido.';
+      err.classList.add('show');
+      document.getElementById('regEmail').focus(); return;
+    }
+    if (pass.length < 8) {
+      err.textContent = 'La contraseña debe tener mínimo 8 caracteres.';
+      err.classList.add('show');
+      document.getElementById('regPass').focus(); return;
+    }
+    if (!/[A-Z]/.test(pass)) {
+      err.textContent = 'La contraseña debe incluir al menos una letra mayúscula (A–Z).';
+      err.classList.add('show'); return;
+    }
+    if (!/[a-z]/.test(pass)) {
+      err.textContent = 'La contraseña debe incluir al menos una letra minúscula (a–z).';
+      err.classList.add('show'); return;
+    }
+    if (!/[0-9]/.test(pass)) {
+      err.textContent = 'La contraseña debe incluir al menos un número (0–9).';
+      err.classList.add('show'); return;
+    }
+    if (pass !== pass2) {
+      err.textContent = 'Las contraseñas no coinciden.';
+      err.classList.add('show');
+      document.getElementById('regPass2').focus(); return;
+    }
+
+    btn.textContent = 'Creando cuenta...';
+    btn.disabled    = true;
+
+    try {
+      await registerUser(nombre, email, pass, tel || null);
+      btn.textContent      = '✓ Cuenta creada';
+      btn.style.background = 'var(--green-neon)';
+      setTimeout(() => { window.location.href = 'cliente/portal.html'; }, 500);
+    } catch (ex) {
+      err.textContent = ex.message || 'Error al crear la cuenta.';
+      err.classList.add('show');
+      btn.textContent  = 'Crear Cuenta';
+      btn.disabled     = false;
+      btn.style.background = '';
+    }
+  }
+
+  // ── RECUPERAR (paso 1) ──
+  async function handleRecuperar(e) {
+    e.preventDefault();
+    const email = document.getElementById('recEmail').value.trim();
+    const btn   = document.getElementById('recBtn1');
+    const err   = document.getElementById('recError1');
+
+    err.classList.remove('show');
+    btn.textContent = 'Enviando...';
+    btn.disabled    = true;
+
+    try {
+      const result = await recoverPassword(email);
+      _recEmail = email;
+
+      // Mostrar token en pantalla (modo demo sin servidor de correo)
+      if (result.token_demo) {
+        document.getElementById('tokenDemoNum').textContent = result.token_demo;
+        document.getElementById('tokenDemo').style.display  = '';
+      }
+
+      document.getElementById('recStep1').style.display = 'none';
+      document.getElementById('recStep2').style.display = '';
+      document.getElementById('dot1').classList.remove('active');
+      document.getElementById('dot2').classList.add('active');
+    } catch (ex) {
+      err.textContent = ex.message || 'No se pudo enviar el código.';
+      err.classList.add('show');
+    } finally {
+      btn.textContent = 'Enviar Código';
+      btn.disabled    = false;
+    }
+  }
+
+  // ── RESET (paso 2) ──
+  async function handleReset(e) {
+    e.preventDefault();
+    const token  = document.getElementById('recToken').value.trim();
+    const pass   = document.getElementById('recNewPass').value;
+    const pass2  = document.getElementById('recNewPass2').value;
+    const btn    = document.getElementById('recBtn2');
+    const err    = document.getElementById('recError2');
+
+    err.classList.remove('show');
+
+    if (pass.length < 8) {
+      err.textContent = 'La contraseña debe tener mínimo 8 caracteres.';
+      err.classList.add('show'); return;
+    }
+    if (!/[A-Z]/.test(pass) || !/[a-z]/.test(pass) || !/[0-9]/.test(pass)) {
+      err.textContent = 'Incluye mayúsculas, minúsculas y al menos un número.';
+      err.classList.add('show'); return;
+    }
+    if (pass !== pass2) {
+      err.textContent = 'Las contraseñas no coinciden.';
+      err.classList.add('show'); return;
+    }
+
+    btn.textContent = 'Actualizando...';
+    btn.disabled    = true;
+
+    try {
+      await resetPassword(_recEmail, token, pass);
+      btn.textContent      = '✓ Contraseña actualizada';
+      btn.style.background = 'var(--green-neon)';
+      setTimeout(() => {
+        showPanel('login');
+        volverPaso1();
+        btn.textContent      = 'Cambiar Contraseña';
+        btn.style.background = '';
+        btn.disabled         = false;
+      }, 1500);
+    } catch (ex) {
+      err.textContent = ex.message || 'Código inválido o expirado.';
+      err.classList.add('show');
+      btn.textContent  = 'Cambiar Contraseña';
+      btn.disabled     = false;
+      btn.style.background = '';
+    }
+  }
+
+  // ── Validación de contraseña en tiempo real ──
+  function validarPass() {
+    const val = document.getElementById('regPass').value;
+
+    const checks = {
+      len:     val.length >= 8,
+      upper:   /[A-Z]/.test(val),
+      lower:   /[a-z]/.test(val),
+      num:     /[0-9]/.test(val),
+      special: /[^A-Za-z0-9]/.test(val),
+    };
+
+    ['len','upper','lower','num','special'].forEach(k => {
+      const el = document.getElementById('rule-' + k);
+      if (!el) return;
+      el.classList.remove('ok','fail');
+      if (!val.length) return;
+      if (checks[k]) {
+        el.classList.add('ok');
+      } else if (k !== 'special') {
+        el.classList.add('fail');
+      }
+    });
+
+    const fill  = document.getElementById('strengthFill');
+    const label = document.getElementById('strengthLabel');
+    if (!fill || !label) return;
+
+    if (!val.length) {
+      fill.style.width = '0'; fill.style.background = 'transparent';
+      label.textContent = ''; return;
+    }
+
+    const score = [checks.len, checks.upper, checks.lower, checks.num, checks.special].filter(Boolean).length;
+    const levels = [
+      { pct:15,  col:'var(--red)',           txt:'Muy débil'   },
+      { pct:35,  col:'var(--orange)',         txt:'Débil'       },
+      { pct:60,  col:'var(--gold)',           txt:'Aceptable'   },
+      { pct:80,  col:'var(--green-bright)',   txt:'Fuerte'      },
+      { pct:100, col:'var(--green-neon)',     txt:'Muy fuerte ✓'},
+    ];
+    const lvl = levels[Math.min(score, levels.length) - 1] || levels[0];
+
+    fill.style.width      = lvl.pct + '%';
+    fill.style.background = lvl.col;
+    label.textContent     = lvl.txt;
+    label.style.color     = lvl.col;
+
+    validarMatch();
+  }
+
+  function validarMatch() {
+    const p1  = document.getElementById('regPass').value;
+    const p2  = document.getElementById('regPass2').value;
+    const msg = document.getElementById('matchMsg');
+    if (!msg || !p2) { if (msg) { msg.textContent = ''; msg.className = 'match-msg'; } return; }
+    const ok  = p1 === p2;
+    msg.textContent = ok ? '✓ Las contraseñas coinciden' : '✗ Las contraseñas no coinciden';
+    msg.className   = 'match-msg ' + (ok ? 'ok' : 'fail');
+  }
+
+  function validarMatchReset() {
+    const p1  = document.getElementById('recNewPass').value;
+    const p2  = document.getElementById('recNewPass2').value;
+    const msg = document.getElementById('matchMsgReset');
+    if (!msg || !p2) { if (msg) { msg.textContent = ''; msg.className = 'match-msg'; } return; }
+    const ok  = p1 === p2;
+    msg.textContent = ok ? '✓ Las contraseñas coinciden' : '✗ Las contraseñas no coinciden';
+    msg.className   = 'match-msg ' + (ok ? 'ok' : 'fail');
+  }
+
+  function togglePass(inputId, btnId) {
+    const input = document.getElementById(inputId);
+    const btn   = document.getElementById(btnId);
+    const show  = input.type === 'password';
+    input.type      = show ? 'text' : 'password';
+    btn.textContent = show ? '🙈' : '👁';
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Portal Cliente — Canchas El Campeón</title>
+<script>if (localStorage.getItem('rol') !== 'cliente') { window.location.replace('../index.html'); }</script>
+
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#22c55e">
+<meta name="mobile-web-app-capable" content="yes">
+<!-- iOS -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Canchas">
+<link rel="apple-touch-icon" href="/icons/icon-192.svg">
+<!-- MS Tiles -->
+<meta name="msapplication-TileColor" content="#22c55e">
+<meta name="msapplication-TileImage" content="/icons/icon-192.svg">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/styles.css">
+<style>
+/* ── Métodos de pago ── */
+.metodo-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-top:4px; }
+.metodo-card {
+  background:var(--dark-input); border:2px solid var(--border);
+  border-radius:12px; padding:14px 8px; cursor:pointer; text-align:center;
+  transition:all .2s;
+}
+.metodo-card:hover { border-color:var(--border2); }
+.metodo-card.selected { border-color:var(--green-bright); background:rgba(34,197,94,.08); }
+.metodo-card .m-icon { font-size:22px; margin-bottom:5px; }
+.metodo-card span { font-size:11px; font-weight:600; color:var(--text-muted); display:block; }
+.metodo-card.selected span { color:var(--green-bright); }
+
+/* ── Flujo de pago ── */
+.pago-flow-box { background:var(--dark-input); border:1px solid var(--border); border-radius:12px; padding:20px; }
+.card-input-wrap { position:relative; }
+.card-brand { position:absolute; right:12px; top:50%; transform:translateY(-50%); font-size:13px; font-weight:800; color:var(--text-muted); letter-spacing:1px; }
+.security-note { display:flex; align-items:flex-start; gap:8px; font-size:11px; color:var(--text-muted); background:rgba(59,130,246,.06); border:1px solid rgba(59,130,246,.18); border-radius:8px; padding:10px 14px; margin-top:14px; line-height:1.6; }
+
+/* ── Validación de campos ── */
+.field-error { font-size:12px; color:var(--red); margin-top:5px; min-height:15px; }
+.input-field.error { border-color:var(--red); }
+.input-field.valid { border-color:var(--green-bright); }
+
+/* ── Duración calculada ── */
+.duracion-chip { display:flex; align-items:center; gap:10px; padding:12px 16px; background:rgba(34,197,94,.06); border:1px solid rgba(34,197,94,.2); border-radius:10px; margin-top:12px; }
+
+/* ── PSE simulado ── */
+.pse-success { background:rgba(34,197,94,.08); border:1px solid rgba(34,197,94,.25); border-radius:10px; padding:14px; margin-top:12px; text-align:center; }
+</style>
+</head>
+<body>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━ HEADER ━━━━━━━━━━━━━━━━━━━━ -->
+<header>
+  <button class="menu-btn" onclick="toggleSidebar()" title="Menú">☰</button>
+  <div class="logo-mark">⚽</div>
+  <div class="logo-text">
+    <strong>Sistema de Canchas</strong>
+    <span>Portal Cliente</span>
+  </div>
+  <div class="header-right">
+    <div class="status-pill">En línea</div>
+    <button class="theme-btn" onclick="toggleTheme()" title="Cambiar tema">☀️</button>
+    <div class="user-chip">
+      <div class="avatar" id="headerAvatar">C</div>
+      <span id="headerNombre">Cliente</span>
+    </div>
+    <div id="headerNivel"></div>
+    <button class="btn-logout" onclick="logout()">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      Cerrar Sesión
+    </button>
+  </div>
+</header>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━ LAYOUT ━━━━━━━━━━━━━━━━━━━━ -->
+<div class="layout">
+
+<!-- SIDEBAR (simplificado) -->
+<aside>
+  <div class="nav-section">Mi Panel</div>
+  <div class="nav-item active" onclick="goTo('inicio')">    <div class="nav-icon">🏠</div>Inicio</div>
+  <div class="nav-item" onclick="goTo('reservar')">          <div class="nav-icon">📅</div>Hacer Reserva</div>
+  <div class="nav-item" onclick="goTo('misreservas')">       <div class="nav-icon">📋</div>Mis Reservas</div>
+  <div class="nav-item" onclick="goTo('puntos')">            <div class="nav-icon">⭐</div>Mis Puntos</div>
+  <div class="nav-item" onclick="goTo('perfil')">            <div class="nav-icon">👤</div>Mi Perfil</div>
+
+  <div style="margin-top:auto;padding:16px;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.15);border-radius:12px;margin-top:24px">
+    <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Mis puntos</div>
+    <div style="font-family:'Bebas Neue';font-size:32px;color:var(--gold)" id="sidebarPuntos">0</div>
+    <div id="sidebarNivel" style="margin-top:4px"></div>
+    <div style="font-size:11px;color:var(--text-muted);margin-top:6px" id="sidebarBeneficio"></div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main>
+
+<!-- ══════════════════════════════════════════════
+     INICIO CLIENTE
+══════════════════════════════════════════════ -->
+<div id="sec-inicio" class="section active">
+  <div class="hero">
+    <div class="hero-badge" id="heroBadge">Bienvenido</div>
+    <div class="hero-icon">⚽</div>
+    <div class="hero-content">
+      <h1 id="heroTitle">Bienvenido,<br>Cliente</h1>
+      <p>Reserva tu cancha favorita de forma rápida y sencilla</p>
+      <div class="hero-stats">
+        <div class="hero-stat"><span class="val" id="heroMisReservas">0</span><span class="lbl">Mis Reservas</span></div>
+        <div class="divider-v"></div>
+        <div class="hero-stat"><span class="val" id="heroPuntos">0</span><span class="lbl">Mis Puntos</span></div>
+        <div class="divider-v"></div>
+        <div class="hero-stat"><span class="val" id="heroNivel">Bronce</span><span class="lbl">Mi Nivel</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-row cols-3">
+    <div class="stat-card c-green" style="cursor:pointer" onclick="goTo('reservar')"><span class="sc-icon">📅</span><div class="sc-label">Reservar cancha</div><div class="sc-val" style="color:var(--green-bright);font-size:28px">RESERVAR</div><div class="sc-sub">Elige cancha, fecha y hora</div></div>
+    <div class="stat-card c-gold"><span class="sc-icon">⭐</span><div class="sc-label">Mis Puntos</div><div class="sc-val" style="color:var(--gold)" id="statPuntos">0</div><div class="sc-sub" id="statNivelSub">Nivel Bronce</div></div>
+    <div class="stat-card c-blue"><span class="sc-icon">📋</span><div class="sc-label">Próxima Reserva</div><div id="proximaReservaCard" class="sc-val" style="color:var(--blue);font-size:20px">—</div><div class="sc-sub" id="proximaFecha">Sin reservas próximas</div></div>
+  </div>
+
+  <div>
+    <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--text-muted);margin-bottom:14px">Canchas Disponibles Hoy</div>
+    <div class="court-grid" id="canchasInicio"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     HACER UNA RESERVA (3 pasos)
+══════════════════════════════════════════════ -->
+<div id="sec-reservar" class="section">
+  <div><div class="page-title">Hacer una Reserva</div><div class="page-sub">Elige tu cancha, fecha y confirma en segundos</div></div>
+
+  <!-- Stepper -->
+  <div class="steps" id="stepperEl">
+    <div class="step active" id="step1El"><div class="step-num">1</div>Elegir cancha<div class="step-line"></div></div>
+    <div class="step" id="step2El"><div class="step-num">2</div>Fecha y hora<div class="step-line"></div></div>
+    <div class="step" id="step3El"><div class="step-num">3</div>Confirmar</div>
+  </div>
+
+  <!-- PASO 1: Elegir cancha -->
+  <div id="paso1">
+    <div class="card-box">
+      <div class="box-head"><h2>🏟️ Paso 1 — Selecciona una cancha</h2></div>
+      <div class="box-body">
+        <div class="cancha-select-grid" id="canchaCards"></div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:8px">
+      <button class="btn btn-primary" id="btnPaso2" onclick="irPaso2()" disabled>Siguiente → Fecha y Hora</button>
+    </div>
+  </div>
+
+  <!-- PASO 2: Fecha, hora y pago -->
+  <div id="paso2" style="display:none">
+    <div class="card-box">
+      <div class="box-head"><h2>📅 Paso 2 — Fecha, hora y pago</h2></div>
+      <div class="box-body">
+
+        <!-- Cancha seleccionada -->
+        <div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:12px;padding:14px;margin-bottom:20px;display:flex;align-items:center;gap:14px">
+          <span style="font-size:28px">⚽</span>
+          <div>
+            <div style="font-size:14px;font-weight:700" id="p2CanchaName">—</div>
+            <div style="font-size:12px;color:var(--text-muted)" id="p2CanchaInfo">—</div>
+          </div>
+          <div style="margin-left:auto;text-align:right">
+            <div style="font-family:'Bebas Neue';font-size:24px;color:var(--gold)" id="p2Precio">—</div>
+            <div style="font-size:11px;color:var(--text-muted)">por hora</div>
+          </div>
+        </div>
+
+        <!-- Fecha y horas -->
+        <div class="form-grid" style="gap:16px">
+          <div>
+            <label>Fecha de reserva</label>
+            <input class="input-field" type="date" id="rFecha" onchange="onFechaCambio()">
+            <div class="field-error" id="fechaError"></div>
+          </div>
+          <div><!-- espacio --></div>
+          <div>
+            <label>Hora de inicio</label>
+            <select class="input-field" id="rHora" onchange="onHoraInicioCambio()"></select>
+            <div class="field-error" id="horaError"></div>
+          </div>
+          <div>
+            <label>Hora de finalización</label>
+            <select class="input-field" id="rHoraFin" onchange="onHoraFinCambio()"></select>
+          </div>
+        </div>
+
+        <!-- Duración calculada -->
+        <div class="duracion-chip" id="duracionChip" style="display:none">
+          <span style="font-size:18px">⏱️</span>
+          <span id="duracionTexto" style="font-size:14px;font-weight:600;color:var(--green-bright);flex:1">—</span>
+          <span id="duracionPrecio" style="font-family:'Bebas Neue';font-size:22px;color:var(--gold)">—</span>
+        </div>
+
+        <!-- Disponibilidad -->
+        <div id="disponMsg" style="margin-top:12px"></div>
+
+        <!-- Método de pago -->
+        <div style="margin-top:24px">
+          <label style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;display:block">Método de pago</label>
+          <div class="metodo-grid">
+            <div class="metodo-card" data-m="efectivo"  onclick="selMetodo('efectivo')"> <div class="m-icon">💵</div><span>Efectivo</span></div>
+            <div class="metodo-card" data-m="nequi"     onclick="selMetodo('nequi')">    <div class="m-icon">📱</div><span>Nequi</span></div>
+            <div class="metodo-card" data-m="daviplata" onclick="selMetodo('daviplata')"><div class="m-icon">📱</div><span>Daviplata</span></div>
+            <div class="metodo-card" data-m="pse"       onclick="selMetodo('pse')">      <div class="m-icon">🏦</div><span>PSE</span></div>
+            <div class="metodo-card" data-m="tarjeta"   onclick="selMetodo('tarjeta')">  <div class="m-icon">💳</div><span>Tarjeta</span></div>
+          </div>
+          <div class="field-error" id="metodoError"></div>
+        </div>
+
+        <!-- Flujo dinámico según método -->
+        <div id="pagoFlow" style="margin-top:16px"></div>
+
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:8px">
+      <button class="btn btn-secondary" onclick="irPaso1()">← Volver</button>
+      <button class="btn btn-primary" id="btnPaso3" onclick="irPaso3()">Siguiente → Confirmar</button>
+    </div>
+  </div>
+
+  <!-- PASO 3: Confirmar -->
+  <div id="paso3" style="display:none">
+    <div class="card-box">
+      <div class="box-head"><h2>✅ Paso 3 — Resumen y Confirmación</h2></div>
+      <div class="box-body">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="background:var(--dark-input);border:1px solid var(--border);border-radius:12px;padding:20px">
+            <div style="font-size:13px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px">Detalle de la reserva</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div><div style="font-size:11px;color:var(--text-muted)">Cancha</div><div style="font-size:14px;font-weight:600" id="r3Cancha">—</div></div>
+              <div><div style="font-size:11px;color:var(--text-muted)">Tipo</div><div style="font-size:14px;font-weight:600" id="r3Tipo">—</div></div>
+              <div><div style="font-size:11px;color:var(--text-muted)">Fecha</div><div style="font-size:14px;font-weight:600" id="r3Fecha">—</div></div>
+              <div><div style="font-size:11px;color:var(--text-muted)">Horario</div><div style="font-size:14px;font-weight:600" id="r3Hora">—</div></div>
+              <div><div style="font-size:11px;color:var(--text-muted)">Duración</div><div style="font-size:14px;font-weight:600" id="r3Duracion">—</div></div>
+              <div><div style="font-size:11px;color:var(--text-muted)">Método de pago</div><div style="font-size:14px;font-weight:600" id="r3Metodo">—</div></div>
+              <div><div style="font-size:11px;color:var(--text-muted)">Referencia pago</div><div style="font-size:13px;font-weight:600;color:var(--text-muted)" id="r3PagoRef">—</div></div>
+            </div>
+          </div>
+          <div class="price-box" style="display:flex;align-items:center;justify-content:space-between;padding:20px">
+            <div><div class="lbl">Total a pagar</div><div class="price" id="r3Total">$0</div></div>
+            <div style="text-align:right"><div style="font-size:11px;color:var(--text-muted)">Puntos que ganarás</div><div style="font-family:'Bebas Neue';font-size:28px;color:var(--gold)" id="r3Puntos">+0</div></div>
+          </div>
+          <div id="descuentoInfo" style="display:none;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:12px;font-size:12px;color:var(--green-bright)"></div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:8px">
+      <button class="btn btn-secondary" onclick="irPaso2()">← Volver</button>
+      <button class="btn btn-primary" id="btnConfirmarReserva" style="padding:12px 32px;font-size:15px" onclick="confirmarReservaCliente()">⚽ Confirmar Reserva</button>
+    </div>
+  </div>
+
+  <!-- ÉXITO -->
+  <div id="pasoExito" style="display:none">
+    <div class="card-box">
+      <div class="box-body" style="text-align:center;padding:48px 20px">
+        <div style="font-size:64px;margin-bottom:16px">✅</div>
+        <div style="font-family:'Bebas Neue';font-size:36px;color:var(--green-bright);margin-bottom:8px">¡Reserva Confirmada!</div>
+        <div style="font-size:14px;color:var(--text-muted);margin-bottom:24px">Tu reserva ha sido registrada exitosamente</div>
+        <div style="background:var(--dark-input);border:1px solid var(--border);border-radius:12px;padding:20px;max-width:360px;margin:0 auto 24px">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">N° de Reserva</div>
+          <div style="font-family:'Bebas Neue';font-size:32px;color:var(--gold)" id="numReserva">#0000</div>
+          <div id="exitoDetalle" style="font-size:13px;color:var(--text-muted);margin-top:8px;line-height:1.8"></div>
+        </div>
+        <div style="display:flex;gap:12px;justify-content:center">
+          <button class="btn btn-secondary" onclick="goTo('misreservas')">Ver mis reservas</button>
+          <button class="btn btn-primary" onclick="nuevaReserva()">＋ Nueva Reserva</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MIS RESERVAS
+══════════════════════════════════════════════ -->
+<div id="sec-misreservas" class="section">
+  <div><div class="page-title">Mis Reservas</div><div class="page-sub">Historial y gestión de tus reservas</div></div>
+
+  <div class="stats-row cols-3">
+    <div class="stat-card c-green"><span class="sc-icon">✅</span><div class="sc-label">Confirmadas</div><div class="sc-val" style="color:var(--green-bright)" id="mrConf">—</div></div>
+    <div class="stat-card c-gold"><span class="sc-icon">⏳</span><div class="sc-label">Pendientes</div><div class="sc-val" style="color:var(--gold)" id="mrPend">—</div></div>
+    <div class="stat-card c-blue"><span class="sc-icon">📊</span><div class="sc-label">Total reservas</div><div class="sc-val" style="color:var(--blue)" id="mrTotal">—</div></div>
+  </div>
+
+  <div class="card-box">
+    <div class="box-head">
+      <h2>📋 Historial de Reservas</h2>
+      <div class="tabs">
+        <div class="tab active" onclick="filtrarMisReservas('todas',this)">Todas</div>
+        <div class="tab" onclick="filtrarMisReservas('proximas',this)">Próximas</div>
+        <div class="tab" onclick="filtrarMisReservas('pasadas',this)">Pasadas</div>
+        <div class="tab" onclick="filtrarMisReservas('canceladas',this)">Canceladas</div>
+      </div>
+    </div>
+    <div id="tablaMisReservas"><div class="loading"><div class="spinner"></div>Cargando...</div></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MIS PUNTOS
+══════════════════════════════════════════════ -->
+<div id="sec-puntos" class="section">
+  <div><div class="page-title">Mis Puntos</div><div class="page-sub">Programa de fidelización y beneficios</div></div>
+
+  <div class="row">
+    <div class="col" style="flex:1">
+      <div class="card-box">
+        <div class="box-body" style="text-align:center;padding:32px">
+          <div style="font-size:13px;text-transform:uppercase;letter-spacing:2px;color:var(--text-muted);margin-bottom:8px">Mis Puntos Actuales</div>
+          <div style="font-family:'Bebas Neue';font-size:72px;color:var(--gold);line-height:1" id="puntosGrandes">0</div>
+          <div id="nivelActual" style="margin-top:8px"></div>
+          <div style="margin-top:20px">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px" id="proximoNivelLabel">Próximo nivel</div>
+            <div class="progress-bar" style="height:10px"><div class="progress-fill pf-gold" id="baraNivel" style="width:0%"></div></div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:6px" id="ptsParaNivel"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-box">
+        <div class="box-head"><h2>🎁 Beneficios por Nivel</h2></div>
+        <div class="box-body" style="display:flex;flex-direction:column;gap:12px">
+          <div id="beneficiosNivel"></div>
+          <div style="background:rgba(245,184,0,.08);border:1px solid rgba(245,184,0,.2);border-radius:10px;padding:14px">
+            <div style="font-size:12px;color:var(--gold);font-weight:700;margin-bottom:4px">💡 ¿Cómo ganar puntos?</div>
+            <div style="font-size:12px;color:var(--text-muted);line-height:1.8">Por cada <b style="color:var(--text-main)">$10.000</b> pagados en reservas recibes <b style="color:var(--gold)">1 punto</b>.<br>Los puntos son acumulables y no tienen fecha de vencimiento.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col" style="flex:1.2">
+      <div class="card-box">
+        <div class="box-head"><h2>📜 Historial de Puntos</h2></div>
+        <div id="historialPuntos"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MI PERFIL
+══════════════════════════════════════════════ -->
+<div id="sec-perfil" class="section">
+  <div><div class="page-title">Mi Perfil</div><div class="page-sub">Administra tu información personal</div></div>
+
+  <div class="row">
+    <div class="col" style="max-width:480px">
+      <div class="card-box">
+        <div class="box-head"><h2>👤 Información Personal</h2></div>
+        <div class="box-body" style="display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;align-items:center;gap:16px;padding:16px;background:var(--dark-input);border:1px solid var(--border);border-radius:12px">
+            <div class="avatar lg" id="perfilAvatar">C</div>
+            <div>
+              <div style="font-size:16px;font-weight:700" id="perfilNombreDisplay">Cliente</div>
+              <div style="font-size:12px;color:var(--text-muted)" id="perfilEmailDisplay">cliente@correo.co</div>
+              <div style="margin-top:6px" id="perfilNivelDisplay"></div>
+            </div>
+          </div>
+          <div><label>Nombre completo</label><input class="input-field" id="perfilNombre" placeholder="Tu nombre"></div>
+          <div><label>Correo electrónico <span style="color:var(--text-muted)">(no se puede cambiar)</span></label><input class="input-field" id="perfilEmail" type="email" placeholder="tu@correo.co" readonly style="opacity:.6;cursor:not-allowed"></div>
+          <div><label>Teléfono</label><input class="input-field" id="perfilTelefono" placeholder="300 000 0000"></div>
+          <div><label>Nueva contraseña <span style="color:var(--text-muted)">(dejar en blanco para no cambiar)</span></label><input class="input-field" type="password" id="perfilPassword" placeholder="••••••••"></div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="guardarPerfil()">Guardar Cambios</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="card-box">
+        <div class="box-head"><h2>📊 Mis Estadísticas</h2></div>
+        <div class="box-body" style="display:flex;flex-direction:column;gap:14px">
+          <div class="stats-row cols-2">
+            <div class="stat-card c-green" style="padding:14px"><div class="sc-label">Total Reservas</div><div class="sc-val" style="color:var(--green-bright);font-size:28px" id="statMisReservas">0</div></div>
+            <div class="stat-card c-gold" style="padding:14px"><div class="sc-label">Total Gastado</div><div class="sc-val" style="color:var(--gold);font-size:22px" id="statMiGasto">$0</div></div>
+          </div>
+          <div class="progress-wrap"><div class="progress-label"><span>Reservas completadas</span><span style="color:var(--green-bright)" id="pctCompletadas">—</span></div><div class="progress-bar"><div class="progress-fill pf-green" id="barCompletadas" style="width:0%"></div></div></div>
+          <div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.15);border-radius:10px;padding:14px">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Cancha favorita</div>
+            <div style="font-size:15px;font-weight:700" id="canchaFavorita">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<div id="toast"><span class="toast-icon"></span><span class="toast-msg"></span></div>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- PWA Install Banner -->
+<div class="pwa-banner" id="pwaBanner">
+  <div class="pwa-banner-icon">⚽</div>
+  <div class="pwa-banner-text">
+    <strong>Instalar App</strong>
+    <span>Agrega Canchas a tu pantalla de inicio</span>
+  </div>
+  <button class="btn btn-primary" style="padding:8px 16px;font-size:12px;white-space:nowrap" onclick="instalarPWA()">Instalar</button>
+  <button class="pwa-banner-close" onclick="cerrarBannerPWA()" title="Cerrar">✕</button>
+</div>
+
+<script src="../js/auth.js"></script>
+<script>applyTheme();</script>
+<script src="../js/cliente.js"></script>
+<script>
+// ── Service Worker ────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+      .catch(err => console.warn('SW no registrado:', err));
+  });
+}
+
+// ── PWA Install Prompt ────────────────────────────────────────────────────
+let _pwaPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _pwaPrompt = e;
+  // Mostrar banner después de 3s (no interrumpir carga)
+  setTimeout(() => {
+    if (!sessionStorage.getItem('pwa-banner-closed')) {
+      document.getElementById('pwaBanner').classList.add('show');
+    }
+  }, 3000);
+});
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('pwaBanner').classList.remove('show');
+  _pwaPrompt = null;
+  if (typeof showToast === 'function') showToast('✅ App instalada en tu pantalla de inicio', 'success');
+});
+
+function instalarPWA() {
+  if (!_pwaPrompt) return;
+  _pwaPrompt.prompt();
+  _pwaPrompt.userChoice.then(choice => {
+    _pwaPrompt = null;
+    document.getElementById('pwaBanner').classList.remove('show');
+    if (choice.outcome === 'accepted' && typeof showToast === 'function') {
+      showToast('✅ Instalando app...', 'success');
+    }
+  });
+}
+
+function cerrarBannerPWA() {
+  document.getElementById('pwaBanner').classList.remove('show');
+  sessionStorage.setItem('pwa-banner-closed', '1');
+}
+
+// ── Deep link shortcuts (manifest shortcuts) ─────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  const hash = window.location.hash.replace('#', '');
+  const validos = ['inicio','reservar','misreservas','puntos','perfil'];
+  if (hash && validos.includes(hash) && typeof goTo === 'function') {
+    setTimeout(() => goTo(hash), 100);
+  }
+});
+</script>
+</body>
+</html>
